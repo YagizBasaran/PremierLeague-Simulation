@@ -18,6 +18,7 @@ func main() {
 	router.GET("/teams", getTeams)
 	router.GET("/results", getMatchResults)
 	router.POST("/weekly-schedule", weeklyScheduleHandler)
+	router.POST("/reset", reset)
 
 	router.POST("/teams/:id/win", winnerTeamAPI)
 	router.POST("/teams/:id/draw", drawTeamAPI)
@@ -112,6 +113,17 @@ func weeklyScheduleHandler(c *gin.Context) {
 	}
 	currentWeek++
 	c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("Week %d simulated", currentWeek)})
+}
+
+func reset(c *gin.Context) {
+	currentWeek = 0
+	teams = []team{
+		{ID: "1", Name: "Chelsea", Points: 0, Played: 0, Win: 0, Drawn: 0, Lost: 0, GoalsFor: 0, GoalsAgainst: 0, GoalDiff: 0, Elo: 1200, Tilt: 1.0},
+		{ID: "2", Name: "Arsenal", Points: 0, Played: 0, Win: 0, Drawn: 0, Lost: 0, GoalsFor: 0, GoalsAgainst: 0, GoalDiff: 0, Elo: 1200, Tilt: 1.0},
+		{ID: "3", Name: "Man City", Points: 0, Played: 0, Win: 0, Drawn: 0, Lost: 0, GoalsFor: 0, GoalsAgainst: 0, GoalDiff: 0, Elo: 1200, Tilt: 1.0},
+		{ID: "4", Name: "Liverpool", Points: 0, Played: 0, Win: 0, Drawn: 0, Lost: 0, GoalsFor: 0, GoalsAgainst: 0, GoalDiff: 0, Elo: 1200, Tilt: 1.0},
+	}
+	results = nil
 }
 
 func winnerTeamAPI(c *gin.Context) {
