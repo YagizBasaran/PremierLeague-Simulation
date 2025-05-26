@@ -44,6 +44,7 @@ Frontend is served from:
 | Method | Endpoint             | Description                          |
 |--------|----------------------|--------------------------------------|
 | GET    | `/teams`             | Returns current teams ALL data       |
+| GET    | `/team?name=Chelsea` | Returns that team (also works ?id=1) |
 | GET    | `/results`           | Returns all match results so far     |
 | GET    | `/championship-ratio`| Returns title prediction percentages |
 ||||
