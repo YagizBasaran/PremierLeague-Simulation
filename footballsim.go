@@ -25,6 +25,11 @@ func main() {
 	router.POST("/reset", reset)
 	router.POST("/finish-season", playWholeLeague)
 
+	router.GET("/championship-ratio", func(c *gin.Context) {
+		ratios := calculateChampionshipRatio()
+		c.JSON(http.StatusOK, ratios)
+	})
+
 	router.POST("/teams/:id/win", winnerTeamAPI)
 	router.POST("/teams/:id/draw", drawTeamAPI)
 	router.POST("/teams/:id/loss", loserTeamAPI)
@@ -181,7 +186,45 @@ func drawTeamAPI(c *gin.Context) {
 	c.JSON(http.StatusNotFound, gin.H{"error": "Team not found"})
 }
 
-//Functions
+// Functions
+// Points based calculation (can be elo and 1000 games simulation based too)
+func calculateChampionshipRatio() map[string]float64 {
+	gamesRemaining := 6 - currentWeek
+	maxPointsPerTeam := gamesRemaining * 3
+
+	ratios := make(map[string]float64)
+	totalProbability := 0.0
+
+	for i, team := range teams {
+		maxPoints := team.Points + maxPointsPerTeam
+
+		canWin := true
+		for j, otherTeam := range teams {
+			if i != j {
+				if otherTeam.Points > maxPoints {
+					canWin = false
+					break
+				}
+			}
+		}
+
+		if !canWin {
+			ratios[team.Name] = 0.0
+		} else {
+			score := float64(team.Points) + float64(gamesRemaining)*0.5
+			ratios[team.Name] = score
+			totalProbability += score
+		}
+	}
+
+	for name, score := range ratios {
+		if totalProbability > 0 {
+			ratios[name] = (score / totalProbability) * 100
+		}
+	}
+
+	return ratios
+}
 
 func simulateCurrentWeek() {
 	if currentWeek == len(schedule) {
@@ -212,8 +255,8 @@ func simulateMatch(a *team, b *team) (int, int) {
 	EloB := 1.0 - EloA
 
 	// 2.7 is the global average in football changes with teams styles
-	//increased to 4 to see more goals
-	expectedGoals := 4.0 * (a.Tilt + b.Tilt) / 2.0
+	//increased to 5 to see more goals
+	expectedGoals := 5.0 * (a.Tilt + b.Tilt) / 2.0
 
 	goalsA := int(math.Round(rand.Float64() * expectedGoals * a.Tilt / (a.Tilt + b.Tilt)))
 	goalsB := int(math.Round(rand.Float64() * expectedGoals * b.Tilt / (a.Tilt + b.Tilt)))

@@ -47,6 +47,12 @@
         <h2>Match Results</h2>
         <div class="results-container" id="results"></div>
       </div>
+
+      <div class="section fade-in">
+        <h2>Championship Predictions</h2>
+        <ul id="predictions"></ul>
+      </div>
+
     </div>
   </div>
 
@@ -111,6 +117,8 @@
       const res = await fetch('/finish-week', { method: 'POST' });
       await loadTeams();
       await loadResults();
+      await loadPredictions();
+
       hideLoading('nextLoading');
     }
 
@@ -119,6 +127,8 @@
       const res = await fetch('/finish-season', { method: 'POST' });
       await loadTeams();
       await loadResults();
+      await loadPredictions();
+
       hideLoading('finishLoading');
     }
 
@@ -127,7 +137,21 @@
       const res = await fetch('/reset', { method: 'POST' });
       await loadTeams();
       document.getElementById("results").innerHTML = "";
+      document.getElementById("predictions").innerHTML = "";
+
       hideLoading('resetLoading');
+    }
+
+    async function loadPredictions() {
+      const res = await fetch('/championship-ratio');
+      const data = await res.json();
+      const list = document.getElementById("predictions");
+      list.innerHTML = "";
+
+      const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]);
+      sorted.forEach(([team, chance]) => {
+        list.innerHTML += `<li><strong>${team}</strong>: ${chance.toFixed(1)}%</li>`;
+      });
     }
 
     // Initial load
