@@ -9,6 +9,8 @@ import (
 	"math"
 	"math/rand"
 	"time"
+
+	"os"
 )
 
 func main() {
@@ -40,8 +42,20 @@ func main() {
 	// simulateMatch(&teams[2], &teams[3])
 	// simulateMatch(&teams[3], &teams[2])
 
-	fmt.Println("Starting server at http://localhost:8079")
-	router.Run("localhost:8079")
+	router.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/web/")
+	})
+
+	// fmt.Println("Starting server at http://localhost:8079")
+	// router.Run("localhost:8079")
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8079"
+	}
+	fmt.Println("Starting server on port", port)
+	router.Run(":" + port)
+
 }
 
 type team struct {
@@ -198,7 +212,8 @@ func simulateMatch(a *team, b *team) (int, int) {
 	EloB := 1.0 - EloA
 
 	// 2.7 is the global average in football changes with teams styles
-	expectedGoals := 2.7 * (a.Tilt + b.Tilt) / 2.0
+	//increased to 4 to see more goals
+	expectedGoals := 4.0 * (a.Tilt + b.Tilt) / 2.0
 
 	goalsA := int(math.Round(rand.Float64() * expectedGoals * a.Tilt / (a.Tilt + b.Tilt)))
 	goalsB := int(math.Round(rand.Float64() * expectedGoals * b.Tilt / (a.Tilt + b.Tilt)))
