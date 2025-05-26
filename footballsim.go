@@ -19,6 +19,7 @@ func main() {
 	router.GET("/results", getMatchResults)
 	router.POST("/weekly-schedule", weeklyScheduleHandler)
 	router.POST("/reset", reset)
+	router.POST("/all-league-schedule", playWholeLeague)
 
 	router.POST("/teams/:id/win", winnerTeamAPI)
 	router.POST("/teams/:id/draw", drawTeamAPI)
@@ -94,24 +95,12 @@ func getMatchResults(c *gin.Context) {
 }
 
 func weeklyScheduleHandler(c *gin.Context) {
+
 	if currentWeek == len(schedule) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Season completed"})
 		return
 	}
-
-	thisWeeksMatchs := schedule[currentWeek]
-
-	for _, game := range thisWeeksMatchs {
-		homeTeam := &teams[game[0]]
-		awayTeam := &teams[game[1]]
-
-		goalsHome, goalsAway := simulateMatch(homeTeam, awayTeam)
-		score := fmt.Sprintf("%d - %d", goalsHome, goalsAway)
-
-		match := match{Week: currentWeek + 1, HomeTeam: homeTeam.Name, AwayTeam: awayTeam.Name, Score: score}
-		results = append(results, match)
-	}
-	currentWeek++
+	simulateCurrentWeek()
 	c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("Week %d simulated", currentWeek)})
 }
 
@@ -124,6 +113,14 @@ func reset(c *gin.Context) {
 		{ID: "4", Name: "Liverpool", Points: 0, Played: 0, Win: 0, Drawn: 0, Lost: 0, GoalsFor: 0, GoalsAgainst: 0, GoalDiff: 0, Elo: 1200, Tilt: 1.0},
 	}
 	results = nil
+}
+
+func playWholeLeague(c *gin.Context) {
+
+	for i := currentWeek; i < len(schedule); i++ {
+		simulateCurrentWeek()
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Whole season simulated"})
 }
 
 func winnerTeamAPI(c *gin.Context) {
@@ -169,6 +166,26 @@ func drawTeamAPI(c *gin.Context) {
 }
 
 //Functions
+
+func simulateCurrentWeek() {
+	if currentWeek == len(schedule) {
+		return
+	}
+
+	thisWeeksMatchs := schedule[currentWeek]
+
+	for _, game := range thisWeeksMatchs {
+		homeTeam := &teams[game[0]]
+		awayTeam := &teams[game[1]]
+
+		goalsHome, goalsAway := simulateMatch(homeTeam, awayTeam)
+		score := fmt.Sprintf("%d - %d", goalsHome, goalsAway)
+
+		match := match{Week: currentWeek + 1, HomeTeam: homeTeam.Name, AwayTeam: awayTeam.Name, Score: score}
+		results = append(results, match)
+	}
+	currentWeek++
+}
 
 const K = 20
 
