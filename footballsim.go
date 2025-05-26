@@ -14,12 +14,14 @@ import (
 func main() {
 	router := gin.Default()
 
+	router.Static("/web", "./public")
+
 	//API Endpoints
 	router.GET("/teams", getTeams)
 	router.GET("/results", getMatchResults)
-	router.POST("/weekly-schedule", weeklyScheduleHandler)
+	router.POST("/finish-week", weeklyScheduleHandler)
 	router.POST("/reset", reset)
-	router.POST("/all-league-schedule", playWholeLeague)
+	router.POST("/finish-season", playWholeLeague)
 
 	router.POST("/teams/:id/win", winnerTeamAPI)
 	router.POST("/teams/:id/draw", drawTeamAPI)

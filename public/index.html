@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Football League Simulator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header fade-in">
+      <h1>Premier League Simulator</h1>
+    </div>
+
+    <div class="controls fade-in">
+      <button class="btn btn-next" onclick="nextWeek()">
+        <span>⏭️ Next Week</span>
+        <div class="loading" id="nextLoading" style="display: none;"></div>
+      </button>
+      <button class="btn btn-finish" onclick="finishSeason()">
+        <span>🏁 Finish Season</span>
+        <div class="loading" id="finishLoading" style="display: none;"></div>
+      </button>
+      <button class="btn btn-reset" onclick="resetLeague()">
+        <span>🔄 Reset League</span>
+        <div class="loading" id="resetLoading" style="display: none;"></div>
+      </button>
+    </div>
+
+    <div class="main-content">
+      <div class="section section-left fade-in">
+        <h2>League Table</h2>
+        <div class="table-container">
+          <table id="teamTable">
+            <thead>
+              <tr>
+                <th>Team</th><th>PTS</th><th>P</th><th>W</th><th>D</th><th>L</th>
+                <th>GF</th><th>GA</th><th>GD</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section section-right fade-in">
+        <h2>Match Results</h2>
+        <div class="results-container" id="results"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showLoading(buttonId) {
+      document.getElementById(buttonId).style.display = 'inline-block';
+    }
+
+    function hideLoading(buttonId) {
+      document.getElementById(buttonId).style.display = 'none';
+    }
+
+    async function loadTeams() {
+      const res = await fetch('/teams');
+      const teams = await res.json();
+      const tbody = document.querySelector("#teamTable tbody");
+      tbody.innerHTML = "";
+      teams.sort((a, b) => b.points - a.points || b.goal_diff - a.goal_diff || b.elo - a.elo);
+      
+      teams.forEach((team, index) => {
+        const goalDiff = team.goal_diff;
+        const gdClass = goalDiff > 0 ? 'stat-positive' : goalDiff < 0 ? 'stat-negative' : '';
+        const trophy = index === 0 ? '<span class="trophy">🏆</span>' : '';
+        
+        tbody.innerHTML += `
+          <tr class="fade-in">
+            <td class="team-name">${team.name}${trophy}</td>
+            <td><strong>${team.points}</strong></td>
+            <td>${team.played}</td>
+            <td class="stat-positive">${team.win}</td>
+            <td>${team.drawn}</td>
+            <td class="stat-negative">${team.lost}</td>
+            <td class="stat-positive">${team.goals_for}</td>
+            <td class="stat-negative">${team.goals_against}</td>
+            <td class="${gdClass}"><strong>${goalDiff > 0 ? '+' : ''}${goalDiff}</strong></td>
+          </tr>`;
+      });
+    }
+
+    async function loadResults() {
+      const res = await fetch('/results');
+      const data = await res.json();
+      const grouped = {};
+      data.forEach(match => {
+        if (!grouped[match.week]) grouped[match.week] = [];
+        grouped[match.week].push(`${match.home} ${match.score} ${match.away}`);
+      });
+      const resultDiv = document.getElementById("results");
+      resultDiv.innerHTML = "";
+      Object.keys(grouped).sort().forEach(week => {
+        resultDiv.innerHTML += `
+          <div class="week-results fade-in">
+            <h3>⚽ Week ${week}</h3>
+            <ul>` +
+          grouped[week].map(m => `<li>📋 ${m}</li>`).join("") + 
+          `</ul></div>`;
+      });
+    }
+
+    async function nextWeek() {
+      showLoading('nextLoading');
+      const res = await fetch('/finish-week', { method: 'POST' });
+      await loadTeams();
+      await loadResults();
+      hideLoading('nextLoading');
+    }
+
+    async function finishSeason() {
+      showLoading('finishLoading');
+      const res = await fetch('/finish-season', { method: 'POST' });
+      await loadTeams();
+      await loadResults();
+      hideLoading('finishLoading');
+    }
+
+    async function resetLeague() {
+      showLoading('resetLoading');
+      const res = await fetch('/reset', { method: 'POST' });
+      await loadTeams();
+      document.getElementById("results").innerHTML = "";
+      hideLoading('resetLoading');
+    }
+
+    // Initial load
+    loadTeams();
+    loadResults();
+  </script>
+</body>
+</html>
