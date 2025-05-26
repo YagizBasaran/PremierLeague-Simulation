@@ -21,6 +21,7 @@ func main() {
 	//API Endpoints
 	router.GET("/teams", getTeams)
 	router.GET("/results", getMatchResults)
+	router.GET("/team", getTeam)
 	router.POST("/finish-week", weeklyScheduleHandler)
 	router.POST("/reset", reset)
 	router.POST("/finish-season", playWholeLeague)
@@ -113,6 +114,20 @@ func getTeams(c *gin.Context) {
 
 func getMatchResults(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, results)
+}
+
+func getTeam(c *gin.Context) {
+	name := c.Query("name")
+	id := c.Query("id")
+
+	for _, t := range teams {
+		if t.Name == name || t.ID == id {
+			c.JSON(http.StatusOK, t)
+			return
+		}
+	}
+
+	c.JSON(http.StatusNotFound, gin.H{"error": "Team not found"})
 }
 
 func weeklyScheduleHandler(c *gin.Context) {
